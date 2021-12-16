@@ -1,5 +1,7 @@
 # Data
 
+The data can be downloaded from [the data release folder](./data_release/).
+
 ## Dataset Description
 
 For each subset (Movies/Books) you can find the following files:
@@ -20,7 +22,8 @@ For each subset (Movies/Books) you can find the following files:
     {
       "id": "submission / query id",
       "title": "raw title of the submission",
-      "description": "raw description that accompanies the submission ",
+      "description": "raw description that accompanies the submission. may slightly differ from the original description",
+      "raw_description": "raw description that accompanies the submission ",
       "meta": {
         "author": "author of the submission",
         // list of top-level replies, which can have nested replies 
