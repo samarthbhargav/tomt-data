@@ -1,11 +1,9 @@
 # Reddit-TOMT
 
-##### 'It's on the tip of my tongue' 
-###### A new dataset for Known-Item Retrieval
+This repository contains data / code for 'It's on the tip of my tongue' - A new dataset for Known-Item Retrieval. 
+Authors: [Samarth Bhargav](https://samarthbhargav.github.io/) | [Georgios Sidiropolous](https://twitter.com/gnsidiro/) | [Evangelos Kanoulas](https://staff.fnwi.uva.nl/e.kanoulas/) - [IRLab, University of Amsterdam](https://irlab.science.uva.nl/)
 
 DOI: Coming soon!
-
-Authors: [Samarth Bhargav](https://samarthbhargav.github.io/) | [Georgios Sidiropolous](https://twitter.com/gnsidiro/) | [Evangelos Kanoulas](https://staff.fnwi.uva.nl/e.kanoulas/) - [IRLab, University of Amsterdam](https://irlab.science.uva.nl/)
 
 Blog post: Coming soon!
 
@@ -26,10 +24,7 @@ This repository contains data and code for reproducing the data collection and b
 
 ## Data
 
-The data can be downloaded here: 
-TODO
-
-A detailed description of the data can be found in [DATA.md](DATA.md#)  
+The data can be downloaded from [the data release folder](./data_release/). A description of the data can be found in [DATA.md](DATA.md#)  
 
 ## Steps to reproduce / extend
 ### Setup 
@@ -61,11 +56,11 @@ develop new methods, etc, see [Collecting Additional Data in DATA.md](DATA.md#Co
 ### Benchmarks
 
 
-We benchmaked this 
+See [Benchmarks](BENCHMARKS.md).
 
-#### Thanks!
+#### Open source projects used
 
-We are thankful for the following APIs/libraries/datasets/misc used in this project:
+We are thankful for the following software and APIs used in this project:
 
 - [Pushshift](https://api.pushshift.io)
 - [PRAW](https://praw.readthedocs.io/en/latest/)
