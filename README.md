@@ -1,6 +1,7 @@
 # Reddit-TOMT
 
-This repository contains data / code for 'It's on the tip of my tongue' - A new dataset for Known-Item Retrieval. 
+This repository contains data / code for 'It's on the tip of my tongue' - A new dataset for Known-Item Retrieval, published at [WSDM2022](https://www.wsdm-conference.org/2022/). 
+
 Authors: [Samarth Bhargav](https://samarthbhargav.github.io/) | [Georgios Sidiropolous](https://twitter.com/gnsidiro/) | [Evangelos Kanoulas](https://staff.fnwi.uva.nl/e.kanoulas/) - [IRLab, University of Amsterdam](https://irlab.science.uva.nl/)
 
 DOI: Coming soon!
