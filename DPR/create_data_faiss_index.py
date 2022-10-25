@@ -15,4 +15,8 @@ if __name__ == '__main__':
         id2doc[record["id"]] = {"title": record["id"], "text": record['text'], "sents": _input.split("\n")}
 
     with open(args.file_path + 'id2doc2.json', 'w') as f:
-        json.dump(id2doc, f, ensure_ascii=False, indent=4)
+        json.dump(id2doc, f, ensure_ascii=True, indent=4)
+
+    with open(args.file_path + "id2doc.json", "w") as f:
+        for iid, doc in id2doc.items():
+            f.write(json.dumps(doc) + "\n")
