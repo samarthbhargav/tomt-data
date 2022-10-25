@@ -1,6 +1,7 @@
 # Data
 
-The data can be downloaded from [the data release folder](./data_release/).
+
+
 
 ## Dataset Description
 
