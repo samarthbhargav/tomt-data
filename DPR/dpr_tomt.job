@@ -16,11 +16,9 @@ export PATH="${CUDA_HOME}/bin:${PATH}"
 export LIBRARY_PATH="${CUDA_HOME}/lib64:${LIBRARY_PATH}"
 export LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
 
-source activate CIKM_MDR
-
 
 # CADORS single-hop
-CUDA_VISIBLE_DEVICES=0,1 python -u mdr/retrieval/train_single.py \
+CUDA_VISIBLE_DEVICES=0,1 python -u multihop_dense_retrieval/mdr/retrieval/train_single.py \
     --do_train \
     --prefix ${SLURM_JOB_ID} \
     --predict_batch_size 125 \
