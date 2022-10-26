@@ -166,7 +166,7 @@ if __name__ == '__main__':
             D, I = index.search(q_embeds_numpy, args.topk)
             print(D, I)
             for b_idx in range(len(batch_q)):
-                topk_docs = [{"title": id2doc[str(doc_id)][0],"text": id2doc[str(doc_id)][1]} for doc_id in I[b_idx]]
+                topk_docs = [{"title": id2doc[str(doc_id)][0],"text": id2doc[str(doc_id)][1], "score": D[b_idx]} for doc_id in I[b_idx]]
                 retrieved_results.append(topk_docs)
                 retrieved_docids.append([str(doc_id) for doc_id in I[b_idx]])
 
@@ -174,43 +174,47 @@ if __name__ == '__main__':
 
     assert len(qids) == len(questions) == len(answers) == len(retrieved_results) == len(retrieved_docids)
     preds = {}
-    for qid, ans, ret_res in zip(qids, answers, retrieved_results):
-        preds[qid] = {}
+    for qid, ret_res in zip(qids, retrieved_results):
+        preds[qid] = {d["title"]: d["score"] for d in ret_res}
 
-    processes = ProcessPool(
-        processes=args.num_workers,
-        initializer=init
-    )
-    get_score_partial = partial(
-         get_score, topk=args.topk)
-    results = processes.map(get_score_partial, answers_docs)
+    assert args.save_pred != ""
+    with open(args.save_pred, "w") as writer:
+        json.dump(preds, writer)
 
-    if args.save_pred != "":
-        to_save = []
-        for inputs, metrics, topk_ids in zip(answers_docs, results, retrieved_docids):
-            q, ans, topk_doc = inputs
-            topk_covered = metrics["covered"]
-            assert len(topk_doc) == len(topk_covered)
-            assert len(topk_doc) == len(topk_ids)
-            to_save.append({
-                "question": q,
-                "ans": ans,
-                "topk": list(zip(topk_doc, topk_covered)),
-                "topkdocs": topk_doc,
-                "metrics": metrics,
-                "topk_ids": topk_ids
-            })
-        print(f"Saving {len(to_save)} instances...")
-        with open(args.save_pred, "w") as g:
-            for l in to_save:
-                g.write(json.dumps(l) + "\n")
-
-    aggregate = defaultdict(list)
-    for r in results:
-        for k, v in r.items():
-            aggregate[k].append(v)
-
-    for k in aggregate:
-        results = aggregate[k]
-        print('Top {} Recall for {} QA pairs: {} ...'.format(
-            k, len(results), np.mean(results)))
+    # processes = ProcessPool(
+    #     processes=args.num_workers,
+    #     initializer=init
+    # )
+    # get_score_partial = partial(
+    #      get_score, topk=args.topk)
+    # results = processes.map(get_score_partial, answers_docs)
+    #
+    # if args.save_pred != "":
+    #     to_save = []
+    #     for inputs, metrics, topk_ids in zip(answers_docs, results, retrieved_docids):
+    #         q, ans, topk_doc = inputs
+    #         topk_covered = metrics["covered"]
+    #         assert len(topk_doc) == len(topk_covered)
+    #         assert len(topk_doc) == len(topk_ids)
+    #         to_save.append({
+    #             "question": q,
+    #             "ans": ans,
+    #             "topk": list(zip(topk_doc, topk_covered)),
+    #             "topkdocs": topk_doc,
+    #             "metrics": metrics,
+    #             "topk_ids": topk_ids
+    #         })
+    #     print(f"Saving {len(to_save)} instances...")
+    #     with open(args.save_pred, "w") as g:
+    #         for l in to_save:
+    #             g.write(json.dumps(l) + "\n")
+    #
+    # aggregate = defaultdict(list)
+    # for r in results:
+    #     for k, v in r.items():
+    #         aggregate[k].append(v)
+    #
+    # for k in aggregate:
+    #     results = aggregate[k]
+    #     print('Top {} Recall for {} QA pairs: {} ...'.format(
+    #         k, len(results), np.mean(results)))
