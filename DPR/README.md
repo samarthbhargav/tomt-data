@@ -7,6 +7,7 @@ echo "tomt-kir-dpr" > ./.python-version
 # create a sym link so code can be accessed
 ln -s ../tomt ./tomt
 pip install torch==1.8.1
+pip install pytrec_eval
 git clone git@github.com:facebookresearch/multihop_dense_retrieval.git
 cd multihop_dense_retrieval 
 bash setup.sh
@@ -108,14 +109,19 @@ srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python encode_corpus.py --do_
 
 Execute this in the `multihop_dense_retrieval` folder:
 
-**Note** The process below requires the editing of one line in the eval_retrieval.py script. Change line `196` from `with open(<path> + args.save_pred, "w") as g:` to `with open(args.save_pred, "w") as g:`
-
 
 ```bash
-cp scripts/eval/eval_retrieval.py mdr/retrieval
-# See note above! Make sure to edit the evaluation script!
-srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python -u mdr/retrieval/eval_retrieval.py ../dataset/Movies/DPR/qas_test.json ../dataset/Movies/DPR/index/.npy ../dataset/Movies/DPR/index/id2doc.json ../$MOVIES_MODEL_NAME/checkpoint_best.pt --batch-size 300 --model-name roberta-base --shared-encoder --save-pred ../$MOVIES_MODEL_NAME/predictions.json --topk 100
+# copy/overwrite the given file with our file that produces predictions.json file
+cp ../eval_retrieval.py mdr/retrieval/eval_retrieval.py
 
-srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python -u mdr/retrieval/eval_retrieval.py ../dataset/Books/DPR/qas_test.json ../dataset/Books/DPR/index/.npy ../dataset/Books/DPR/index/id2doc.json ../$BOOKS_MODEL_NAME/checkpoint_best.pt --batch-size 300 --model-name roberta-base --shared-encoder --save-pred ../$BOOKS_MODEL_NAME/predictions.json --topk 100
+srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python -u mdr/retrieval/eval_retrieval.py ../dataset/Movies/DPR/qas_test.json ../dataset/Movies/DPR/index/.npy ../dataset/Movies/DPR/index/id2doc.json ../$MOVIES_MODEL_NAME/checkpoint_best.pt --batch-size 300 --model-name roberta-base --shared-encoder --save-pred ../$MOVIES_MODEL_NAME/predictions.json --topk 1000
+
+# evaluate the results!
+srun python eval_predictions_file.py --root dataset/ --dataset Movies --predictions ../$MOVIES_MODEL_NAME/predictions.json
+
+srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python -u mdr/retrieval/eval_retrieval.py ../dataset/Books/DPR/qas_test.json ../dataset/Books/DPR/index/.npy ../dataset/Books/DPR/index/id2doc.json ../$BOOKS_MODEL_NAME/checkpoint_best.pt --batch-size 300 --model-name roberta-base --shared-encoder --save-pred ../$BOOKS_MODEL_NAME/predictions.json --topk 1000
+
+# evaluate the results!
+srun python eval_predictions_file.py --root dataset/ --dataset Books --predictions ../$BOOKS_MODEL_NAME/predictions.json
 ```
 
