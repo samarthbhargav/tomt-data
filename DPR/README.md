@@ -116,12 +116,11 @@ cp ../eval_retrieval.py mdr/retrieval/eval_retrieval.py
 
 srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python -u mdr/retrieval/eval_retrieval.py ../dataset/Movies/DPR/qas_test.json ../dataset/Movies/DPR/index/.npy ../dataset/Movies/DPR/index/id2doc.json ../$MOVIES_MODEL_NAME/checkpoint_best.pt --batch-size 300 --model-name roberta-base --shared-encoder --save-pred ../$MOVIES_MODEL_NAME/predictions.json --topk 1000
 
-# evaluate the results!
-srun python eval_predictions_file.py --root dataset/ --dataset Movies --predictions ../$MOVIES_MODEL_NAME/predictions.json
-
 srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python -u mdr/retrieval/eval_retrieval.py ../dataset/Books/DPR/qas_test.json ../dataset/Books/DPR/index/.npy ../dataset/Books/DPR/index/id2doc.json ../$BOOKS_MODEL_NAME/checkpoint_best.pt --batch-size 300 --model-name roberta-base --shared-encoder --save-pred ../$BOOKS_MODEL_NAME/predictions.json --topk 1000
 
 # evaluate the results!
-srun python eval_predictions_file.py --root dataset/ --dataset Books --predictions ../$BOOKS_MODEL_NAME/predictions.json
+cd ../
+srun python eval_predictions_file.py --root dataset/ --dataset Movies --predictions $MOVIES_MODEL_NAME/predictions.json
+srun python eval_predictions_file.py --root dataset/ --dataset Books --predictions $BOOKS_MODEL_NAME/predictions.json
 ```
 
