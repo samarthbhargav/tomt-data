@@ -58,33 +58,6 @@ console = logging.StreamHandler()
 logger.addHandler(console)
 
 PROCESS_TOK = None
-def init():
-    global PROCESS_TOK
-    PROCESS_TOK = SimpleTokenizer()
-    Finalize(PROCESS_TOK, PROCESS_TOK.shutdown, exitpriority=100)
-
-def get_score(answer_doc, topk=20):
-    """Search through all the top docs to see if they have the answer."""
-    question, answer, docs = answer_doc
-    top5doc_covered = 0
-    global PROCESS_TOK
-    topkpara_covered = []
-    for p in docs:
-        topkpara_covered.append(int(para_has_answer(answer, p["title"] + " " + p["text"], PROCESS_TOK)))
-
-    return {
-        "5": int(np.sum(topkpara_covered[:5]) > 0),
-        "10": int(np.sum(topkpara_covered[:10]) > 0),
-        "20": int(np.sum(topkpara_covered[:20]) > 0),
-        "50": int(np.sum(topkpara_covered[:50]) > 0),
-        "100": int(np.sum(topkpara_covered[:100]) > 0),
-        "covered": topkpara_covered
-    }
-
-
-def add_marker_q(tokenizer, q):
-    q_toks = tokenizer.tokenize(q)
-    return ['[unused0]'] + q_toks
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -107,6 +80,7 @@ if __name__ == '__main__':
     logger.info(f"Loading questions")
     qas = [json.loads(line) for line in open(args.raw_data).readlines()]
     questions = [_["question"][:-1] if _["question"].endswith("?") else _["question"] for _ in qas]
+    qids = [_["_id"] for _ in qas]
     answers = [item["answer"] for item in qas]
 
     logger.info(f"Loading index")
@@ -115,15 +89,9 @@ if __name__ == '__main__':
     index = faiss.IndexFlatIP(d)
     index.add(xb)
 
-    if args.gpu:    
+    if args.gpu:
         res = faiss.StandardGpuResources()
         index = faiss.index_cpu_to_gpu(res, 1, index)
-    # logger.info(f"Building GPU index")
-    # co = faiss.GpuMultipleClonerOptions()
-    # co.useFloat16 = True
-    # co.shards = True
-    # index = faiss.index_cpu_to_gpus_list(index, co, [1,2,3,4,5,6,7])
-    # index.add(xb)
 
     logger.info("Loading trained model...")
     bert_config = AutoConfig.from_pretrained(args.model_name)
@@ -134,11 +102,12 @@ if __name__ == '__main__':
         model = RobertaRetrieverSingle(bert_config, args)
     else:
         model = BertRetrieverSingle(bert_config, args)
-    
+
     model = load_saved(model, args.model_path, exact=False)
     cuda = torch.device('cuda')
     model.to(cuda)
     from apex import amp
+
     model = amp.initialize(model, opt_level='O1')
     model.eval()
 
@@ -147,62 +116,29 @@ if __name__ == '__main__':
     logger.info(f"Corpus size {len(id2doc)}")
 
     retrieved_results = []
-    retrieved_docids = []
     for b_start in tqdm(range(0, len(questions), args.batch_size)):
         with torch.no_grad():
             batch_q = questions[b_start:b_start + args.batch_size]
             batch_ans = answers[b_start:b_start + args.batch_size]
 
-            # test retrieval model with marker
-            # batch_q_toks = [add_marker_q(tokenizer, q) for q in batch_q]
-            # batch_q_encodes = tokenizer.batch_encode_plus(batch_q_toks, max_length=args.max_q_len, pad_to_max_length=True, return_tensors="pt", is_pretokenized=True)
-
-            batch_q_encodes = tokenizer.batch_encode_plus(batch_q, max_length=args.max_q_len, pad_to_max_length=True, return_tensors="pt", is_pretokenized=True)        
+            batch_q_encodes = tokenizer.batch_encode_plus(batch_q, max_length=args.max_q_len, pad_to_max_length=True,
+                                                          return_tensors="pt", is_pretokenized=True)
 
             batch_q_encodes = move_to_cuda(dict(batch_q_encodes))
-            q_embeds = model.encode_q(batch_q_encodes["input_ids"], batch_q_encodes["attention_mask"], batch_q_encodes.get("token_type_ids", None))
+            q_embeds = model.encode_q(batch_q_encodes["input_ids"], batch_q_encodes["attention_mask"],
+                                      batch_q_encodes.get("token_type_ids", None))
             q_embeds_numpy = q_embeds.cpu().contiguous().numpy()
             D, I = index.search(q_embeds_numpy, args.topk)
             for b_idx in range(len(batch_q)):
-                topk_docs = [{"title": id2doc[str(doc_id)][0],"text": id2doc[str(doc_id)][1]} for doc_id in I[b_idx]]
+                topk_docs = []
+                for doc_id, doc_score in zip(I[b_idx], D[b_idx]):
+                    topk_docs.append({"title": id2doc[str(doc_id)][0], "score": float(doc_score)})
                 retrieved_results.append(topk_docs)
-                retrieved_docids.append([str(doc_id) for doc_id in I[b_idx]])
 
-    answers_docs = list(zip(questions, answers, retrieved_results))
-    processes = ProcessPool(
-        processes=args.num_workers,
-        initializer=init
-    )
-    get_score_partial = partial(
-         get_score, topk=args.topk)
-    results = processes.map(get_score_partial, answers_docs)
-
-    if args.save_pred != "":
-        to_save = []
-        for inputs, metrics, topk_ids in zip(answers_docs, results, retrieved_docids):
-            q, ans, topk_doc = inputs
-            topk_covered = metrics["covered"]
-            assert len(topk_doc) == len(topk_covered)
-            assert len(topk_doc) == len(topk_ids)
-            to_save.append({
-                "question": q,
-                "ans": ans,
-                "topk": list(zip(topk_doc, topk_covered)),
-                "topkdocs": topk_doc,
-                "metrics": metrics,
-                "topk_ids": topk_ids
-            })
-        print(f"Saving {len(to_save)} instances...")
-        with open("/private/home/xwhan/data/nq-dpr/results/" + args.save_pred, "w") as g:
-            for l in to_save:
-                g.write(json.dumps(l) + "\n")
-
-    aggregate = defaultdict(list)
-    for r in results:
-        for k, v in r.items():
-            aggregate[k].append(v)
-
-    for k in aggregate:
-        results = aggregate[k]
-        print('Top {} Recall for {} QA pairs: {} ...'.format(
-            k, len(results), np.mean(results)))
+    assert len(qids) == len(questions) == len(answers) == len(retrieved_results)
+    preds = {}
+    for qid, ret_res in zip(qids, retrieved_results):
+        preds[qid] = {d["title"]: d["score"] for d in ret_res}
+    assert args.save_pred != ""
+    with open(args.save_pred, "w") as writer:
+        json.dump(preds, writer)
