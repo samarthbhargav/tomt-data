@@ -28,7 +28,7 @@ if __name__ == '__main__':
     with open(args.predictions, "r") as reader:
         predictions = json.load(reader)
 
-    assert len(qids) == len(predictions)
+    assert all([qid in predictions for qid in qids])
 
     evaluator = pytrec_eval.RelevanceEvaluator(qrels, metrics_to_compute)
 
