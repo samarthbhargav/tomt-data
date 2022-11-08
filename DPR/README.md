@@ -8,13 +8,9 @@ echo "tomt-kir-dpr" > ./.python-version
 ln -s ../tomt ./tomt
 pip install torch==1.8.1
 pip install pytrec_eval
-git clone git@github.com:facebookresearch/multihop_dense_retrieval.git
 cd multihop_dense_retrieval 
 bash setup.sh
-
 ```
-
-**Note** After installation, uncomment the 'loss_single' function in mdr/retrieval/criterions.py file! 
 
 # Prepare the data for DPR
 
@@ -97,10 +93,26 @@ Start executing this in the `multihop_dense_retrieval` folder:
 
 cp scripts/encode_corpus.py ./
 # create Movies index
-srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python encode_corpus.py --do_predict --predict_batch_size 100 --model_name roberta-base --predict_file ../dataset/Movies/DPR/id2doc2.json --init_checkpoint ../$MOVIES_MODEL_NAME/checkpoint_best.pt    --embed_save_path ../dataset/Movies/DPR/index --max_c_len 512   --num_workers 20
+srun -p gpu --time=01:00:00 --gres=gpu:2 --mem=64G python encode_corpus.py \
+    --do_predict \
+    --predict_batch_size 100 \
+    --model_name roberta-base \
+    --predict_file ../dataset/Movies/DPR/id2doc2.json \
+    --init_checkpoint ../$MOVIES_MODEL_NAME/checkpoint_best.pt    \
+    --embed_save_path ../dataset/Movies/DPR/index \
+    --max_c_len 512   \
+    --num_workers 20
 
 # create Books index
-srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python encode_corpus.py --do_predict --predict_batch_size 100 --model_name roberta-base --predict_file ../dataset/Books/DPR/id2doc2.json --init_checkpoint ../$BOOKS_MODEL_NAME/checkpoint_best.pt    --embed_save_path ../dataset/Books/DPR/index --max_c_len 512   --num_workers 20
+srun -p gpu --time=01:00:00 --gres=gpu:2 --mem=64G python encode_corpus.py \
+    --do_predict \
+    --predict_batch_size 100 \
+    --model_name roberta-base \
+    --predict_file ../dataset/Books/DPR/id2doc2.json \
+    --init_checkpoint ../$BOOKS_MODEL_NAME/checkpoint_best.pt    \
+    --embed_save_path ../dataset/Books/DPR/index \
+    --max_c_len 512   \
+    --num_workers 20
 
 ```
 
@@ -114,9 +126,9 @@ Execute this in the `multihop_dense_retrieval` folder:
 # copy/overwrite the given file with our file that produces predictions.json file
 cp ../eval_retrieval.py mdr/retrieval/eval_retrieval.py
 
-srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python -u mdr/retrieval/eval_retrieval.py ../dataset/Movies/DPR/qas_test.json ../dataset/Movies/DPR/index/.npy ../dataset/Movies/DPR/index/id2doc.json ../$MOVIES_MODEL_NAME/checkpoint_best.pt --batch-size 300 --model-name roberta-base --shared-encoder --save-pred ../$MOVIES_MODEL_NAME/predictions.json --topk 1000
+srun -p gpu --time=01:00:00 --gres=gpu:2 --mem=64G python -u mdr/retrieval/eval_retrieval.py ../dataset/Movies/DPR/qas_test.json ../dataset/Movies/DPR/index.npy ../dataset/Movies/DPR/index/id2doc.json ../$MOVIES_MODEL_NAME/checkpoint_best.pt --batch-size 300 --model-name roberta-base --shared-encoder --save-pred ../$MOVIES_MODEL_NAME/predictions.json --topk 1000
 
-srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python -u mdr/retrieval/eval_retrieval.py ../dataset/Books/DPR/qas_test.json ../dataset/Books/DPR/index/.npy ../dataset/Books/DPR/index/id2doc.json ../$BOOKS_MODEL_NAME/checkpoint_best.pt --batch-size 300 --model-name roberta-base --shared-encoder --save-pred ../$BOOKS_MODEL_NAME/predictions.json --topk 1000
+srun -p gpu --time=01:00:00 --gres=gpu:2 --mem=64G python -u mdr/retrieval/eval_retrieval.py ../dataset/Books/DPR/qas_test.json ../dataset/Books/DPR/index.npy ../dataset/Books/DPR/index/id2doc.json ../$BOOKS_MODEL_NAME/checkpoint_best.pt --batch-size 300 --model-name roberta-base --shared-encoder --save-pred ../$BOOKS_MODEL_NAME/predictions.json --topk 1000
 
 # evaluate the results!
 cd ../
