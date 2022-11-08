@@ -97,10 +97,10 @@ Start executing this in the `multihop_dense_retrieval` folder:
 
 cp scripts/encode_corpus.py ./
 # create Movies index
-srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python encode_corpus.py --do_predict --predict_batch_size 100 --model_name roberta-base --predict_file ../dataset/Movies/DPR/id2doc.json --init_checkpoint ../$MOVIES_MODEL_NAME/checkpoint_best.pt    --embed_save_path ../dataset/Movies/DPR/index --max_c_len 512   --num_workers 20
-# create Books index
+srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python encode_corpus.py --do_predict --predict_batch_size 100 --model_name roberta-base --predict_file ../dataset/Movies/DPR/id2doc2.json --init_checkpoint ../$MOVIES_MODEL_NAME/checkpoint_best.pt    --embed_save_path ../dataset/Movies/DPR/index --max_c_len 512   --num_workers 20
 
-srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python encode_corpus.py --do_predict --predict_batch_size 100 --model_name roberta-base --predict_file ../dataset/Books/DPR/id2doc.json --init_checkpoint ../$BOOKS_MODEL_NAME/checkpoint_best.pt    --embed_save_path ../dataset/Books/DPR/index --max_c_len 512   --num_workers 20
+# create Books index
+srun -p gpu --time=10:00:00 --gres=gpu:2 --mem=64G python encode_corpus.py --do_predict --predict_batch_size 100 --model_name roberta-base --predict_file ../dataset/Books/DPR/id2doc2.json --init_checkpoint ../$BOOKS_MODEL_NAME/checkpoint_best.pt    --embed_save_path ../dataset/Books/DPR/index --max_c_len 512   --num_workers 20
 
 ```
 
