@@ -161,6 +161,25 @@ def get_all_submissions(start_time, end_time, output, sleep_time=0.5, retry_coun
         json.dump(all_submissions, writer, indent=2)
 
 
+def get_submission(submission_id: str, config: dict, get_comments: bool):
+    # create reddit instance
+    # we want only read only, so no need to provide username / password
+    reddit = praw.Reddit(client_id=config["client_id"],
+                         client_secret=config["client_secret"],
+                         user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:15.0) Gecko/20100101 Firefox/15.0.1")
+
+    assert reddit.read_only
+    try:
+        submission = reddit.submission(submission_id)
+
+        if get_comments:
+            # extract all comments
+            submission.comments.replace_more(limit=None)
+        return submission
+    except exceptions.NotFound:
+        log.warning(f"not found: {submission_id}")
+
+
 def download_submissions(config_file, input_submissions, output_folder):
     with open(config_file) as reader:
         config = json.load(reader)

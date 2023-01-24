@@ -155,24 +155,19 @@ def process(j, config):
             e = str(e)
         ERR_TYPES[e] += 1
 
-        return None, None, None
+        return None, None, None, None
 
     document_id = document["id"]
 
     query_id = j["id"]
     qrel = (query_id, 0, document_id, 1)
 
+    n_tokens = len(lex_utils.tokenize(j["description"], lemmatize=True))
     query = {
         "id": query_id,
-        "title": j["title"],
-        "description": j["description"],
-        "meta": {
-            "author": j["author"],
-            "replies": j["replies"]
-        }
     }
 
-    return query, document, qrel
+    return query, n_tokens, document, qrel
 
 
 def line_count(file):
@@ -221,7 +216,7 @@ if __name__ == '__main__':
     log.info(f"Opening: {args.input}")
     lex_utils = Utils(remove_square_braces=True, incl_only_alphanumeric=True)
     with open(args.input) as reader:
-        for i, line in enumerate(tqdm(reader)):
+        for i, line in enumerate(tqdm(reader, total=line_count(args.input))):
             if i % 1000 == 0:
                 log.info(f"Processing: {i}. Obtained {len(queries)}. {round(time.time() - start_time, 2)}s elapsed")
             submission = json.loads(line)
@@ -229,7 +224,7 @@ if __name__ == '__main__':
             temp_file_path = os.path.join(args.output_folder, "temp", submission["id"])
             if not os.path.exists(temp_file_path):
                 try:
-                    query, document, qrel = process(submission, args.config)
+                    query, n_query_tokens, document, qrel = process(submission, args.config)
                 except KeyboardInterrupt:
                     log.info("Got a KBInterrupt. Hit Ctrl-C again to quit (within 5 s)")
                     try:
@@ -241,18 +236,16 @@ if __name__ == '__main__':
                         sys.exit(-1)
 
                 with open(temp_file_path, "wb") as w:
-                    pkl.dump((query, document, qrel), w)
+                    pkl.dump((query, n_query_tokens, document, qrel), w)
             else:
                 with open(temp_file_path, "rb") as r:
-                    (query, document, qrel) = pkl.load(r)
+                    (query, n_query_tokens, document, qrel) = pkl.load(r)
 
             if not all((query, document, qrel)):
                 continue
 
-            query_desc = query["description"]
-            query_tokens = lex_utils.tokenize(query_desc, lemmatize=True)
-            if len(query_tokens) < args.min_length_query:
-                log.info(f"Too few tokens for query: {query_desc}")
+            if n_query_tokens < args.min_length_query:
+                log.info(f"Too few tokens for query: {submission['id']}")
                 continue
 
             document_text = document["text"]
@@ -281,8 +274,8 @@ if __name__ == '__main__':
                 assert req in doc and doc[req] is not None
             writer.write(json.dumps(doc) + "\n")
 
-    req_fields_query = {"title", "id", "description"}
-    with open(os.path.join(args.output_folder, "queries.json"), "w") as writer:
+    req_fields_query = {"id"}
+    with open(os.path.join(args.output_folder, "raw_queries.json"), "w") as writer:
         for q in queries:
             for req in req_fields_query:
                 assert req in q and q[req] is not None
@@ -298,7 +291,7 @@ if __name__ == '__main__':
     n_hard_negatives = 0
 
     os.makedirs(os.path.join(args.output_folder, "temp_neg"), exist_ok=True)
-    for file_name in os.listdir(args.negatives):
+    for file_name in os.listdir(os.path.join(args.output_folder, "temp_neg")):
         if file_name.startswith("."):
             continue
         sub_id = file_name.split(".")[0]

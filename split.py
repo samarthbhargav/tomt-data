@@ -111,25 +111,26 @@ if __name__ == '__main__':
     supress_log("imdbpy.parser.http.piculet")
 
     print("Creating Splits")
-    if not os.path.exists("./dataset/Movies/splits"):
-        train_val_test_split("./dataset/Movies")
     if not os.path.exists("./dataset/Books/splits"):
         train_val_test_split("./dataset/Books")
+    if not os.path.exists("./dataset/Movies/splits"):
+        train_val_test_split("./dataset/Movies")
+
     print("Creating Splits complete")
 
-    imdb_api = IMDBApi("./imdb_cache")
-    goodreads_data = GoodReadsData("./dataset/ucsd_goodreads/")
-
-    print("Analyzing position of answers")
-
-    root = "./dataset/Books/splits"
-    solved_gt_path = args.ent_folder_books
-    submissions_path = args.input_json_books
-    create_ans_pos_subids(root, solved_gt_path, submissions_path, find_gold_ent_book)
-    print("Analyzing position of answers for Books: Done!")
-
-    root = "./dataset/Movies/splits"
-    solved_gt_path = args.ent_folder_movies
-    submissions_path = args.input_json_movies
-    create_ans_pos_subids(root, solved_gt_path, submissions_path, find_gold_ent_mov)
-    print("Analyzing position of answers for Movies: Done!")
+    # imdb_api = IMDBApi("./imdb_cache")
+    # goodreads_data = GoodReadsData("./dataset/ucsd_goodreads/")
+    #
+    # print("Analyzing position of answers")
+    #
+    # root = "./dataset/Books/splits"
+    # solved_gt_path = args.ent_folder_books
+    # submissions_path = args.input_json_books
+    # create_ans_pos_subids(root, solved_gt_path, submissions_path, find_gold_ent_book)
+    # print("Analyzing position of answers for Books: Done!")
+    #
+    # root = "./dataset/Movies/splits"
+    # solved_gt_path = args.ent_folder_movies
+    # submissions_path = args.input_json_movies
+    # create_ans_pos_subids(root, solved_gt_path, submissions_path, find_gold_ent_mov)
+    # print("Analyzing position of answers for Movies: Done!")
