@@ -12,16 +12,15 @@ log = logging.getLogger(__name__)
 def get_data(submission_id, cache_dir, reddit_config, force_refresh=False, get_comments=False):
     p = os.path.join(cache_dir, submission_id + ".pkl")
     # load from cache
-    if force_refresh or not os.path.exists(p):
+    if os.path.exists(p) and not force_refresh:
+        return utils.load_pickle(p)
+    else:
         submission = reddit.get_submission(submission_id, reddit_config, get_comments)
         if submission is None:
             raise ValueError("not found!")
 
         utils.write_pickle(submission, p)
         return submission
-    else:
-        return utils.load_pickle(p)
-
 
 def load_fields(data, cache_dir, reddit_config_path, force_refresh):
     reddit_config = utils.read_json(reddit_config_path)
