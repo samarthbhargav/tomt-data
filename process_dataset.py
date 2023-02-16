@@ -11,7 +11,8 @@ log = logging.getLogger(__name__)
 def save_submission(submission, path):
     j = {
         "title": submission.title,
-        "selftext": submission.selftext
+        "selftext": submission.selftext,
+        "url": submission.url
     }
     utils.write_json(j, path)
     return j
@@ -44,6 +45,7 @@ def load_fields(data, cache_dir, reddit_config_path, force_refresh):
         # todo: clean?
         d["title"] = submission["title"]
         d["description"] = submission["selftext"]
+        d["url"] = submission["url"]
 
     log.info(f"not found: {not_found}")
 
