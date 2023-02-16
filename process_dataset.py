@@ -57,7 +57,10 @@ if __name__ == '__main__':
     assert args.input != args.out, "input == out!"
     os.makedirs(args.cache, exist_ok=True)
     start_time = time.time()
-    data = utils.read_jsonl(args.input)
-    load_fields(data, args.cache, args.reddit_config_path, args.force_refresh)
-    utils.write_jsonl(data, args.out)
-    log.info(f"took {time.time() - start_time} seconds!")
+    if not os.path.exists(args.out):
+        data = utils.read_jsonl(args.input)
+        load_fields(data, args.cache, args.reddit_config_path, args.force_refresh)
+        utils.write_jsonl(data, args.out)
+        log.info(f"took {time.time() - start_time} seconds!")
+    else:
+        log.info(f"{args.out} exists. skipping!")
