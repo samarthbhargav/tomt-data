@@ -8,19 +8,24 @@ from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 
+def save_submission(submission, path):
+    j = {
+        "title": submission.title,
+        "selftext": submission.selftext
+    }
+    utils.write_json(j, path)
+    return j
 
-def get_data(submission_id, cache_dir, reddit_config, force_refresh=False, get_comments=False):
-    p = os.path.join(cache_dir, submission_id + ".pkl")
+def get_data(submission_id, cache_dir, reddit_config, force_refresh=False):
+    p = os.path.join(cache_dir, submission_id + ".json")
     # load from cache
     if os.path.exists(p) and not force_refresh:
-        return utils.load_pickle(p)
+        return utils.read_json(p)
     else:
-        submission = reddit.get_submission(submission_id, reddit_config, get_comments)
+        submission = reddit.get_submission(submission_id, reddit_config, get_comments=False)
         if submission is None:
             raise ValueError("not found!")
-
-        utils.write_pickle(submission, p)
-        return submission
+        return save_submission(submission, p)
 
 def load_fields(data, cache_dir, reddit_config_path, force_refresh):
     reddit_config = utils.read_json(reddit_config_path)
@@ -29,14 +34,16 @@ def load_fields(data, cache_dir, reddit_config_path, force_refresh):
         try:
             submission = get_data(d["id"], cache_dir,
                                   reddit_config=reddit_config,
-                                  force_refresh=force_refresh,
-                                  get_comments=False)
+                                  force_refresh=force_refresh)
+        except KeyboardInterrupt as e:
+            raise ValueError(e)
         except:
             not_found += 1
             continue
+    
         # todo: clean?
-        d["title"] = submission.title
-        d["description"] = submission.selftext
+        d["title"] = submission["title"]
+        d["description"] = submission["selftext"]
 
     log.info(f"not found: {not_found}")
 
