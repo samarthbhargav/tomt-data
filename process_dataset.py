@@ -8,20 +8,25 @@ from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 
+def save_submission(submission, path):
+    j = {
+        "title": submission.title,
+        "selftext": submission.selftext,
+        "url": submission.url
+    }
+    utils.write_json(j, path)
+    return j
 
-def get_data(submission_id, cache_dir, reddit_config, force_refresh=False, get_comments=False):
-    p = os.path.join(cache_dir, submission_id + ".pkl")
+def get_data(submission_id, cache_dir, reddit_config, force_refresh=False):
+    p = os.path.join(cache_dir, submission_id + ".json")
     # load from cache
-    if force_refresh or not os.path.exists(p):
-        submission = reddit.get_submission(submission_id, reddit_config, get_comments)
+    if os.path.exists(p) and not force_refresh:
+        return utils.read_json(p)
+    else:
+        submission = reddit.get_submission(submission_id, reddit_config, get_comments=False)
         if submission is None:
             raise ValueError("not found!")
-
-        utils.write_pickle(submission, p)
-        return submission
-    else:
-        return utils.load_pickle(p)
-
+        return save_submission(submission, p)
 
 def load_fields(data, cache_dir, reddit_config_path, force_refresh):
     reddit_config = utils.read_json(reddit_config_path)
@@ -30,14 +35,17 @@ def load_fields(data, cache_dir, reddit_config_path, force_refresh):
         try:
             submission = get_data(d["id"], cache_dir,
                                   reddit_config=reddit_config,
-                                  force_refresh=force_refresh,
-                                  get_comments=False)
+                                  force_refresh=force_refresh)
+        except KeyboardInterrupt as e:
+            raise ValueError(e)
         except:
             not_found += 1
             continue
+    
         # todo: clean?
-        d["title"] = submission.title
-        d["description"] = submission.selftext
+        d["title"] = submission["title"]
+        d["description"] = submission["selftext"]
+        d["url"] = submission["url"]
 
     log.info(f"not found: {not_found}")
 
@@ -57,7 +65,10 @@ if __name__ == '__main__':
     assert args.input != args.out, "input == out!"
     os.makedirs(args.cache, exist_ok=True)
     start_time = time.time()
-    data = utils.read_jsonl(args.input)
-    load_fields(data, args.cache, args.reddit_config_path, args.force_refresh)
-    utils.write_jsonl(data, args.out)
-    log.info(f"took {time.time() - start_time} seconds!")
+    if not os.path.exists(args.out):
+        data = utils.read_jsonl(args.input)
+        load_fields(data, args.cache, args.reddit_config_path, args.force_refresh)
+        utils.write_jsonl(data, args.out)
+        log.info(f"took {time.time() - start_time} seconds!")
+    else:
+        log.info(f"{args.out} exists. skipping!")
