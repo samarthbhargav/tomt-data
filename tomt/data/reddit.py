@@ -76,8 +76,14 @@ def pushshift_submission(subreddit, **kwargs):
 
 
 def get_all_submissions(start_time, end_time, output, sleep_time=0.5, retry_count=10):
-    true_start_time = datetime.strptime(start_time, "%d-%m-%Y")
-    true_end_time = datetime.strptime(end_time, "%d-%m-%Y")
+    if isinstance(start_time, datetime):
+        true_start_time = start_time
+        true_end_time = end_time
+    elif isinstance(start_time, str):
+        true_start_time = datetime.strptime(start_time, "%d-%m-%Y")
+        true_end_time = datetime.strptime(end_time, "%d-%m-%Y")
+    else:
+        raise ValueError("start/end times have to be strings or datetime objects")
 
     log.info(f"Start Time: {true_start_time}; End Time: {true_end_time}")
 
@@ -91,7 +97,7 @@ def get_all_submissions(start_time, end_time, output, sleep_time=0.5, retry_coun
     limit = 1000
 
     # initialize before and after
-    before = start_time  # start from this time and go backward until last_time is achieved
+    before = start_time  # start from this time and go backward until last_time is reached
     after = None  # this is ignored in the first call
     assert last_time < start_time, "last_time must occur before start_time"
     all_submissions = []
@@ -148,8 +154,9 @@ def get_all_submissions(start_time, end_time, output, sleep_time=0.5, retry_coun
     all_submissions = [
         s for s in all_submissions if s["created_utc"] < start_time]
 
-    log.info(
-        f"First Post has Time: {all_submissions[0]['created_time']}\nLast Post has Time: {all_submissions[-1]['created_time']}")
+    if len(all_submissions) > 0:
+        log.info(
+            f"First Post has Time: {all_submissions[0]['created_time']}\nLast Post has Time: {all_submissions[-1]['created_time']}")
 
     log.info(f"A total of {len(all_submissions)} submissions downloaded")
 
@@ -178,6 +185,7 @@ def get_submission(submission_id: str, config: dict, get_comments: bool):
         return submission
     except exceptions.NotFound:
         log.warning(f"not found: {submission_id}")
+        return None
 
 
 def download_submissions(config_file, input_submissions, output_folder):
