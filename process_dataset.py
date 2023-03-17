@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 
+
 def save_submission(submission, path):
     j = {
         "title": submission.title,
@@ -16,6 +17,7 @@ def save_submission(submission, path):
     }
     utils.write_json(j, path)
     return j
+
 
 def get_data(submission_id, cache_dir, reddit_config, force_refresh=False):
     p = os.path.join(cache_dir, submission_id + ".json")
@@ -28,7 +30,9 @@ def get_data(submission_id, cache_dir, reddit_config, force_refresh=False):
             raise ValueError("not found!")
         return save_submission(submission, p)
 
+
 def load_fields(data, cache_dir, reddit_config_path, force_refresh):
+    populated_data = []
     reddit_config = utils.read_json(reddit_config_path)
     not_found = 0
     for d in tqdm(data, unit="doc"):
@@ -38,16 +42,31 @@ def load_fields(data, cache_dir, reddit_config_path, force_refresh):
                                   force_refresh=force_refresh)
         except KeyboardInterrupt as e:
             raise ValueError(e)
-        except:
+
+        # empty URL
+        if len(submission["url"]) == 0:
             not_found += 1
             continue
-    
-        # todo: clean?
+
+        # empty or removed description
+        if len(submission["selftext"].strip()) == 0 or submission["selftext"].strip() in {"[removed]", "[deleted]"}:
+            not_found += 1
+            continue
+
+        if len(submission["title"].strip()) == 0 or submission["title"].strip() == "[deleted by user]":
+            not_found += 1
+            continue
+
+        d = d.copy()
+
         d["title"] = submission["title"]
         d["description"] = submission["selftext"]
         d["url"] = submission["url"]
 
+        populated_data.append(d)
+
     log.info(f"not found: {not_found}")
+    return populated_data
 
 
 if __name__ == '__main__':
@@ -67,7 +86,7 @@ if __name__ == '__main__':
     start_time = time.time()
     if not os.path.exists(args.out):
         data = utils.read_jsonl(args.input)
-        load_fields(data, args.cache, args.reddit_config_path, args.force_refresh)
+        data = load_fields(data, args.cache, args.reddit_config_path, args.force_refresh)
         utils.write_jsonl(data, args.out)
         log.info(f"took {time.time() - start_time} seconds!")
     else:

@@ -16,3 +16,4 @@ wiki_ent_cache
 /common_index/
 /results
 .submissions_cache
+.pushshift_cache/
