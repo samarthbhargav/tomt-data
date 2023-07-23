@@ -2,7 +2,8 @@
 
 
 We've mapped the Reddit-TOMT dataset to the [TREC-ToT](https://trec-tot.github.io/) 2023 corpus, and 
-released the queries in the same format as the TREC-ToT dataset. 
+released the queries in the same format as the TREC-ToT dataset. You can download the dataset [here](trec_dataset.zip). 
+ 
 
 
 Not all queries were mapped. The number of queries successfully mapped are reported in the table below:
@@ -16,7 +17,7 @@ Not all queries were mapped. The number of queries successfully mapped are repor
 
 
 The format of the data is similar to the [TREC-ToT queries](https://trec-tot.github.io/guidelines), with 
-`sentence_annotations` always `null`. 
+`sentence_annotations` always `null`. There is one JSONL file per split. 
 
 
  
