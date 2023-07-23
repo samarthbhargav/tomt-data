@@ -9,7 +9,7 @@ import numpy as np
 from config import configure_logging, supress_log
 from tomt.benchmarks.gt import GTData
 from tomt.data.goodreads import format_isbn, GoodReadsData
-from tomt.data.imdb import IMDBApi
+from tomt.data.imdb_api import IMDBApi
 from tomt.data.train_test_split import train_val_test_split
 
 

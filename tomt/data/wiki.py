@@ -9,7 +9,7 @@ from requests import utils as requests_utils
 from wikidata.client import Client
 from wikidata.entity import Entity, EntityId, EntityState
 
-from tomt.data.imdb import ImdbID
+from tomt.data.imdb_api import ImdbID
 
 WIKIDATA_CLIENT = Client()
 ISBN_10_PROP = "P957"
