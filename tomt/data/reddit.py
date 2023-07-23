@@ -5,6 +5,7 @@ import logging
 import argparse
 import pickle as pkl
 from datetime import datetime, timezone
+import random
 
 import pytz
 import praw
@@ -13,6 +14,25 @@ from tqdm.autonotebook import tqdm
 from prawcore import exceptions
 
 log = logging.getLogger(__name__)
+
+import signal
+from contextlib import contextmanager
+
+
+class TimeoutException(Exception): pass
+
+
+@contextmanager
+def time_limit(seconds):
+    def signal_handler(signum, frame):
+        raise TimeoutException("Timed out!")
+
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
 
 
 def utc_timestamp(dt):
@@ -188,7 +208,7 @@ def get_submission(submission_id: str, config: dict, get_comments: bool):
         return None
 
 
-def download_submissions(config_file, input_submissions, output_folder):
+def download_submissions(config_file, input_submissions, output_folder, timeout=None):
     with open(config_file) as reader:
         config = json.load(reader)
 
@@ -207,28 +227,53 @@ def download_submissions(config_file, input_submissions, output_folder):
         submissions = json.load(reader)
 
     n_submissions = len(submissions)
-    not_found = []
-    for idx in tqdm(range(n_submissions)):
-        submission_id = submissions[idx]["id"]
-
+    subs_to_dl = []
+    for s in submissions:
+        submission_id = s["id"]
         pkl_path = os.path.join(output_folder, f"{submission_id}.pkl")
 
         # if path exists, skip
         if os.path.exists(pkl_path):
             continue
 
-        try:
-            submission = reddit.submission(submission_id)
-            # extract all comments
-            submission.comments.replace_more(limit=None)
-        except exceptions.NotFound:
-            not_found.append(submission_id)
-            continue
+        subs_to_dl.append(submission_id)
 
+    print(f"{n_submissions - len(subs_to_dl)} already downloaded")
+
+    random.shuffle(subs_to_dl)
+    not_found = []
+    timedout = []
+    for submission_id in tqdm(subs_to_dl):
+
+        if timeout is not None and timeout > 0:
+            try:
+                with time_limit(timeout):
+                    submission = reddit.submission(submission_id)
+                    # extract all comments
+                    submission.comments.replace_more(limit=None)
+            except (TimeoutException, exceptions.RequestException):
+                log.warning(f"{submission_id} timed out, skipping")
+                timedout.append(submission_id)
+                continue
+            except exceptions.NotFound:
+                log.warning(f"{submission_id} not found, skipping")
+                not_found.append(submission_id)
+                continue
+        else:
+            try:
+                submission = reddit.submission(submission_id)
+                # extract all comments
+                submission.comments.replace_more(limit=None)
+            except exceptions.NotFound:
+                not_found.append(submission_id)
+                continue
+
+        pkl_path = os.path.join(output_folder, f"{submission_id}.pkl")
         # dump the object
         with open(pkl_path, "wb") as writer:
             pkl.dump(submission, writer)
 
+    log.info(f"{len(timedout)}  documents timed out")
     log.info(f"{len(not_found)}  documents not found")
 
 

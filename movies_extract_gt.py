@@ -8,7 +8,7 @@ import urlextract
 from tqdm import tqdm
 
 from tomt.data import wiki
-from tomt.data.imdb import IMDBApi, extract_imdb_ids, ImdbID
+from tomt.data.imdb_api import IMDBApi, extract_imdb_ids, ImdbID
 import argparse
 
 

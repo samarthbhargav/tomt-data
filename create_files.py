@@ -6,10 +6,12 @@ import pickle as pkl
 import sys
 import time
 from collections import defaultdict
+
+from imdb import IMDbDataAccessError
 from tqdm import tqdm
 from config import configure_logging, supress_log
 from tomt.data.goodreads import GoodReadsData, GoodreadsApi, format_isbn
-from tomt.data.imdb import IMDBApi, ImdbID
+from tomt.data.imdb_api import IMDBApi, ImdbID
 from tomt.data.wiki import WikiApi
 import tomt.data.utils as utils
 from tomt.benchmarks.lexical_utils import Utils
@@ -154,7 +156,10 @@ def process(j, config):
         else:
             e = str(e)
         ERR_TYPES[e] += 1
-
+        return None, None, None, None
+    except IMDbDataAccessError as e:
+        e = "Unable to get imdb entity"
+        ERR_TYPES[e] += 1
         return None, None, None, None
 
     document_id = document["id"]

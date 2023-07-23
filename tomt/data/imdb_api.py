@@ -3,7 +3,7 @@ import os
 import pickle as pkl
 from urllib.parse import urlparse
 
-import imdb
+import imdb as imdb_api
 
 imdb_id_re = re.compile("^tt[0-9]+")
 
@@ -23,7 +23,7 @@ class IMDBApi:
     def __init__(self, imdb_cache_location):
         os.makedirs(imdb_cache_location, exist_ok=True)
         self.imdb_cache_location = imdb_cache_location
-        self.ia = imdb.IMDb()
+        self.ia = imdb_api.Cinemagoer()
 
     def get_plot(self, movie):
         plots = movie.data.get("plot", [])

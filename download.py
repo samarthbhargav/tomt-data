@@ -19,6 +19,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", help="output location for the threads", default="dataset/tomt/")
     parser.add_argument("--sleep_time", help="sleep time in seconds between each request for Pushshift", type=float,
                         default=1.)
+    parser.add_argument("--timeout", default=None, type=int, help="timeout in seconds (per submission)")
 
     config.add_common_args(parser)
 
@@ -33,4 +34,4 @@ if __name__ == "__main__":
         reddit.get_all_submissions(args.start_time, args.end_time, args.submissions, sleep_time=args.sleep_time)
 
     # use the submission ids to get the threads from reddit
-    reddit.download_submissions(args.conf, args.submissions, args.output)
+    reddit.download_submissions(args.conf, args.submissions, args.output, timeout=args.timeout)
