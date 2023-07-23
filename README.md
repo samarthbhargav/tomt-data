@@ -67,6 +67,12 @@ This repository contains data and code for reproducing the data collection and b
 
 The data can be downloaded from [the data release folder](./data_release/). A description of the data can be found in [DATA.md](DATA.md#)
 
+### TREC-ToT
+
+We've re-released the dataset for [TREC-ToT](https://trec-tot.github.io/), in a similar format. You can download the data here: 
+[trec_dataset.zip](trec_dataset.zip), and read more [here](TREC.md).
+
+
 ## Steps to reproduce / extend
 ### Setup 
 
