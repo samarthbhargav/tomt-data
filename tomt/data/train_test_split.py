@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 
 def train_val_test_split(folder_path, val_prop=0.1, test_prop=0.1, seed=42):
-    queries = read_jsonl(os.path.join(folder_path, "raw_queries.json"))
+    queries = read_jsonl(os.path.join(folder_path, "queries.json"))
     log.info(f"Got {len(queries)} queries")
 
     np.random.seed(seed)
@@ -40,7 +40,7 @@ def train_val_test_split(folder_path, val_prop=0.1, test_prop=0.1, seed=42):
 
     for split, indices in idx.items():
         os.makedirs(os.path.join(folder_path, "splits", split), exist_ok=False)
-        q_path = os.path.join(folder_path, "splits", split, "raw_queries.json")
+        q_path = os.path.join(folder_path, "splits", split, "queries.json")
         qrel_path = os.path.join(folder_path, "splits", split, "qrels.txt")
 
         log.info(f"Writing {len(indices)} queries to: {q_path} and {qrel_path}")
