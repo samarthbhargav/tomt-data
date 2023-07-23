@@ -18,14 +18,29 @@ For each subset (Movies/Books) you can find the following files:
       }
     }
   ```
-- `queries.json` A JSONL file where each line is a query with the JSON structure described below. 
-Note that the `title` and `text` fields are not distributed, and need to be downloaded using 
-the `fill_data.sh` or `process_data.py` script:
+- `queries.json` A JSONL file where each line is a query with the following JSON structure:
     ```json
     {
       "id": "submission / query id",
       "title": "raw title of the submission",
-      "description": "raw description that accompanies the submission"
+      "description": "raw description that accompanies the submission. may slightly differ from the original description",
+      "raw_description": "raw description that accompanies the submission ",
+      "meta": {
+        "author": "author of the submission",
+        // list of top-level replies, which can have nested replies 
+        "replies": [
+          {
+            "id": "reply id",
+            "body": "raw reply text",
+            "created_date": "time created",
+            "author_name": "author of the reply",
+            "replies": [
+              // replies to this comment (similar structure) 
+              // - is nested and of arbitrary depth 
+            ]
+          }
+        ]
+      }
     }
     ``` 
 - `qrels.txt` A QREL file which indicates the correct item for a particular query. Each line is one query/document pair 
@@ -101,23 +116,7 @@ python filter_available.py --input_json ./dataset/solved_Books.json --ent_folder
 ```
 python create_files.py ./dataset/GoldMovies.json ./dataset/Movies/ movie --negatives ./neg_Movies
 python create_files.py ./dataset/GoldBooks.json ./dataset/Books/ book --negatives ./neg_Books
+python split.py --input_json_movies ./dataset/solved_Movies.json --ent_folder_movies ./gt_Movies --input_json_books ./dataset/solved_Books.json --ent_folder_books ./gt_Books
 python clean_data.py ./dataset/Movies --sub_folders csv/of/paths/to/submission/pickles
 python clean_data.py ./dataset/Books --sub_folders csv/of/paths/to/submission/pickles
-python split.py --input_json_movies ./dataset/solved_Movies.json --ent_folder_movies ./gt_Movies --input_json_books ./dataset/solved_Books.json --ent_folder_books ./gt_Books
 ```
-- The scripts above do not load the title / description, so execute the following commands to 
-obtain the final data:
-
-```
-python process_dataset.py --input ./dataset/Books/raw_queries.json --out ./dataset/Books/queries.json --cache /path/to/submission/pickles
-for split in train validation test
-do
-    python process_dataset.py --input ./dataset/Books/splits/$split/raw_queries.json --out ./dataset/Books/splits/$split/queries.json --cache /path/to/submission/pickles
-done
-
-python process_dataset.py --input ./dataset/Movies/raw_queries.json --out ./dataset/Movies/queries.json --cache /path/to/submission/pickles
-for split in train validation test
-do
-    python process_dataset.py --input ./dataset/Movies/splits/$split/raw_queries.json --out ./dataset/Movies/splits/$split/queries.json --cache /path/to/submission/pickles
-done
-``` 

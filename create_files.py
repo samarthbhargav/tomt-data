@@ -170,6 +170,8 @@ def process(j, config):
     n_tokens = len(lex_utils.tokenize(j["description"], lemmatize=True))
     query = {
         "id": query_id,
+        "title": j["title"],
+        "description": j["description"]
     }
 
     return query, n_tokens, document, qrel
@@ -279,8 +281,8 @@ if __name__ == '__main__':
                 assert req in doc and doc[req] is not None
             writer.write(json.dumps(doc) + "\n")
 
-    req_fields_query = {"id"}
-    with open(os.path.join(args.output_folder, "raw_queries.json"), "w") as writer:
+    req_fields_query = {"id", "title", "description"}
+    with open(os.path.join(args.output_folder, "queries.json"), "w") as writer:
         for q in queries:
             for req in req_fields_query:
                 assert req in q and q[req] is not None

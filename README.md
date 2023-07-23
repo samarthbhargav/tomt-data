@@ -67,20 +67,6 @@ This repository contains data and code for reproducing the data collection and b
 
 The data can be downloaded from [the data release folder](./data_release/). A description of the data can be found in [DATA.md](DATA.md#)
 
-Only the submission id of the queries are distributed. The text data can be downloaded by
-executing the following commands:
-
-```
-mkdir -p dataset
-cp data_release/Books.zip dataset/
-cp data_release/Movies.zip dataset/
-cd dataset 
-unzip Books.zip
-unzip Movies.zip
-cd ../
-sh fill_data.sh
-```  
-
 ## Steps to reproduce / extend
 ### Setup 
 
